@@ -405,9 +405,21 @@ class CassandraClientProcessor {
   }
 
   @BuildStep
-  ServiceProviderBuildItem registerMutinyResultProducerService() {
-    return new ServiceProviderBuildItem(
-        "com.datastax.oss.driver.api.mapper.result.MapperResultProducerService",
-        MutinyResultProducerService.class.getName());
+  void registerMutinyResultProducerService(
+      BuildProducer<ServiceProviderBuildItem> serviceProviders) {
+    final String mapperResultProducerServiceClassName =
+        "com.datastax.oss.driver.api.mapper.result.MapperResultProducerService";
+    try {
+      Class.forName(
+          mapperResultProducerServiceClassName,
+          false,
+          Thread.currentThread().getContextClassLoader());
+      /* Only register the service provider if com.datastax.oss:java-driver-mapper-runtime
+       * is in the class path */
+      serviceProviders.produce(
+          new ServiceProviderBuildItem(
+              mapperResultProducerServiceClassName, MutinyResultProducerService.class.getName()));
+    } catch (ClassNotFoundException ignored) {
+    }
   }
 }
